@@ -4,8 +4,8 @@ This repository provides the source code and dataset utilized in the experiments
 
 ## Repository Contents
 
-- `src/` — Source code used for data processing, analysis, and experiments  
-- `data/` — Dataset collected and used in the study
+- `src/` — Source code used for data processing, analysis, and models  
+- `dataset/` — Dataset collected and used in the study
 - `LICENSE` — License terms for code and data
 
 ## Dataset
