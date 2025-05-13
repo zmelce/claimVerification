@@ -10,7 +10,7 @@ This repository provides the source code and dataset utilized in the experiments
 
 ## Dataset
 
-The dataset is derived from [source, e.g., "Google Fact Check Tools API"] and contains structured metadata (e.g., `claimReviewed`, `author`, `datePublished`) relevant to our analysis.  
+The dataset is derived from [source, e.g., "Google Fact Check Tools API"] and contains structured metadata (e.g., `publisher`, `claim`, `review_URL`) relevant to our analysis.  
 Data has been anonymized/processed to comply with relevant terms of service and copyright rules.
 
 See `dataset/README.md` for more details.
