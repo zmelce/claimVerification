@@ -1,16 +1,11 @@
 ## this code is modified version of GreaseLM model https://github.com/snap-stanford/GreaseLM.git for fact checking problem
 
-import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import BertModel, BertForMaskedLM, RobertaModel
 from transformers.models.bert.modeling_bert import BertEncoder
 #from ogb.graphproppred import PygGraphPropPredDataset
-from torch_geometric.loader import DataLoader
-from torch.utils.data import TensorDataset, DataLoader
-from torch_geometric.data import Data
 from tqdm.notebook import tqdm
-import pandas as pd
 from torch.utils.data import TensorDataset, DataLoader
 from transformers import AutoTokenizer, AutoModel, AutoConfig
 from transformers import AdamW, get_linear_schedule_with_warmup
@@ -28,8 +23,18 @@ from torch_geometric.nn import MessagePassing
 from torch_geometric.utils import remove_self_loops, add_self_loops  #, softmax
 from torch_geometric.nn import global_mean_pool
 from torch_scatter import scatter
-import random
-import pandas as pd
+from transformers.modeling_tf_pytorch_utils import load_pytorch_checkpoint_in_tf2_model
+import h5py
+import logging
+from transformers.utils.hub import cached_file
+from torch import optim
+from transformers import PretrainedConfig
+from transformers.file_utils import (
+    TF2_WEIGHTS_NAME,
+    TF_WEIGHTS_NAME,
+    WEIGHTS_NAME,
+    default_cache_path
+)
 
 
 def gelu(x):
@@ -594,51 +599,6 @@ class MatrixAttention(nn.Module):
 
 
 
-import torch.nn as nn
-import torch.nn.functional as F
-from cycler import cycler
-from torch_geometric.nn import global_mean_pool
-from torch_geometric.utils import unbatch
-from transformers import BertModel, BertForMaskedLM, RobertaModel, BertConfig, RobertaConfig
-from transformers.models.bert.modeling_bert import BertEncoder
-#from modeling import modeling_gnn
-#from utils import layers
-#from claimReview import kg_gat
-#from modeling import modeling_gnn
-#from ogb.graphproppred import PygGraphPropPredDataset
-from torch_geometric.loader import DataLoader
-from torch.utils.data import TensorDataset, DataLoader
-from torch_geometric.data import Data, Batch
-#import kg_gat
-from tqdm.notebook import tqdm
-import pandas as pd
-from torch.utils.data import TensorDataset, DataLoader
-from transformers import AutoTokenizer, AutoModel, AutoConfig
-from transformers import AdamW, get_linear_schedule_with_warmup
-import torch
-from torch.utils.data import DataLoader, RandomSampler, SequentialSampler, Dataset
-from tqdm.notebook import tqdm
-from torch_geometric.graphgym import optim
-from torch.nn.utils import clip_grad_norm_
-import numpy as np
-#from sentence_transformers import SentenceTransformer
-from lightning.pytorch.utilities import CombinedLoader
-import torch_geometric.transforms as T
-from torch_geometric.utils import to_dense_batch, to_dense_adj
-from torch_geometric.nn import GATv2Conv
-from transformers.modeling_tf_pytorch_utils import load_pytorch_checkpoint_in_tf2_model
-import h5py
-import logging
-import os
-from transformers.utils.hub import cached_file
-from torch import optim
-from transformers import PretrainedConfig
-from transformers.file_utils import (
-    TF2_WEIGHTS_NAME,
-    TF_WEIGHTS_NAME,
-    WEIGHTS_NAME,
-    default_cache_path
-)
 logger = logging.getLogger(__name__)
 ModelClass = RobertaModel
 
