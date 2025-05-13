@@ -75,7 +75,5 @@ def process_data(dataframe):
 
     return allRelList, allNodeList
 
-train_relList, train_nodeList = process_data(X_train) # claimReview data with AMR nodes and relations
-train_loader = DataLoader(train_dataList,shuffle=False, batch_size=64)
-test_dataList, test_relList, test_nodeList = process_data(X_test) # claimReview data with AMR nodes and relations
-test_loader = DataLoader(test_dataList,shuffle=False, batch_size=64)
+relList, nodeList = process_data(data) # claimReview data with AMR nodes and relations
+data_loader = DataLoader(train_dataList,shuffle=False, batch_size=64)
