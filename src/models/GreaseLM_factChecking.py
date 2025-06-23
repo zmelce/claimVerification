@@ -400,6 +400,73 @@ class MultiheadAttPoolLayer(nn.Module):
         output = self.dropout(output)
         return output, attn
 
+class MultiheadAttPoolLayer2(nn.Module):
+
+    def __init__(self, n_head, d_q_original, d_k_original, dropout=0.1):
+        super().__init__()
+        assert d_k_original % n_head == 0  # make sure the output dimension equals to d_k_origin
+        self.n_head = n_head
+        self.d_k = d_k_original // n_head
+        self.d_v = d_k_original // n_head
+
+        self.w_qs = nn.Linear(d_q_original, n_head * self.d_k)
+        self.w_ks = nn.Linear(d_k_original, n_head * self.d_k)
+        self.w_vs = nn.Linear(d_k_original, n_head * self.d_v)
+
+        nn.init.normal_(self.w_qs.weight, mean=0, std=np.sqrt(2.0 / (d_q_original + self.d_k)))
+        nn.init.normal_(self.w_ks.weight, mean=0, std=np.sqrt(2.0 / (d_k_original + self.d_k)))
+        nn.init.normal_(self.w_vs.weight, mean=0, std=np.sqrt(2.0 / (d_k_original + self.d_v)))
+
+        self.attention = MatrixVectorScaledDotProductAttention(temperature=np.power(self.d_k, 0.5))
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, q, k_list, mask_list=None):
+        """
+        q: tensor of shape (b, d_q_original)  – query (e.g., sent_vecs)
+        k_list: list of length b, each element is tensor [n_i, d_k_original]  – key/value per graph
+        mask_list: optional list of [n_i] masks (optional)
+
+        returns:
+            output: tensor of shape (b, n * d_v)
+            attn_list: list of attention weights, each [n_i]
+        """
+        n_head, d_k, d_v = self.n_head, self.d_k, self.d_v
+        bs = len(k_list)
+
+        outputs = []
+        attn_list = []
+
+        for i in range(bs):
+            k = k_list[i]  # [n_i, d_k_original]
+            v = k  # same as key
+            query = q[i].unsqueeze(0)  # [1, d_q_original]
+
+            # Linear projections
+            q_proj = self.w_qs(query).view(n_head, d_k)  # [n, dk]
+            k_proj = self.w_ks(k).view(-1, n_head, d_k)  # [n_i, n, dk]
+            v_proj = self.w_vs(v).view(-1, n_head, d_v)  # [n_i, n, dv]
+
+            k_proj = k_proj.permute(1, 0, 2).contiguous()  # [n, n_i, dk]
+            v_proj = v_proj.permute(1, 0, 2).contiguous()  # [n, n_i, dv]
+
+            q_proj = q_proj.view(n_head, 1, d_k)  # [n, 1, dk]
+
+            if mask_list is not None and mask_list[i] is not None:
+                mask = mask_list[i].unsqueeze(0).repeat(n_head, 1)  # [n, n_i]
+            else:
+                mask = None
+
+            # Apply attention
+            attn_out, attn = self.attention(q_proj.squeeze(1), k_proj, v_proj, mask=mask)  # attn_out: [n, dv]
+
+            attn_out = attn_out.view(n_head, d_v)
+            attn_out = attn_out.permute(0, 1).contiguous().view(n_head * d_v)  # [n * dv]
+
+            outputs.append(self.dropout(attn_out))
+            attn_list.append(attn.mean(dim=0))  # mean over heads -> [n_i]
+
+        output = torch.stack(outputs, dim=0)  # [b, n * dv]
+        return output, attn_list
 
 class TypedMultiheadAttPoolLayer(nn.Module):
 
@@ -676,12 +743,13 @@ class LMGNN(nn.Module):
         hidden_states = all_hidden_states[self.layer_id] # [bs, seq_len, sent_dim]
         sent_vecs = self.mp.pooler(hidden_states) # [bs, sent_dim]
 
-        Z_vecs = gnn_output[:,0]   #(batch_size, dim_node)
+        node_counts = torch.bincount(graph.batch).tolist()
+        gnn_split = torch.split(gnn_output, node_counts, dim=0)  # list of [n_i, dim_node]
 
         sent_vecs_for_pooler = sent_vecs
-        graph_vecs, pool_attn = self.pooler(sent_vecs_for_pooler, gnn_output, mask=None)
+        graph_vecs, pool_attn = self.pooler(sent_vecs_for_pooler, gnn_split)
 
-        concat = torch.cat((sent_vecs, graph_vecs), 1)
+        concat = torch.cat((sent_vecs, graph_vecs), dim=1)
         logits = self.fc(self.dropout_fc(concat))
 
         return logits, gnn_output, emb
@@ -913,8 +981,5 @@ class RoBERTaGAT(BertEncoder):
             outputs = outputs + (all_hidden_states,)
         if output_attentions:
             outputs = outputs + (all_attentions,)
-
-        batch_s =ref.size(dim=0)
-        x_new= x.unsqueeze(0).expand(batch_s, -1, -1)
       
-        return outputs, x_new,emb
+        return outputs, x, emb
