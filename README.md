@@ -6,7 +6,6 @@ This repository provides the source code and dataset utilized in the experiments
 
 - `src/` — Source code used for data processing, analysis, and models  
 - `dataset/` — Dataset collected and used in the study
-- `LICENSE` — License terms for code and data
 
 ## Dataset
 
@@ -15,7 +14,5 @@ Data has been anonymized/processed to comply with relevant terms of service and 
 
 See `dataset/README.md` for more details.
 
-## Requirements
 
-To run the code, install the required dependencies:
 
