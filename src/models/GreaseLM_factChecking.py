@@ -949,9 +949,9 @@ class RoBERTaGAT(BertEncoder):
                 if self.info_exchange == True or (self.info_exchange == "every-other-layer" and (i - self.num_hidden_layers + self.k) % 2 == 0):
                     batch_arr= batch.cpu().detach().numpy()
                     temp = [0]
-                    for i, elem in enumerate(batch_arr):
-                        if (i < len(batch_arr) - 1 and elem != batch_arr[i + 1]):
-                            temp.append(i + 1)
+                    for j, elem in enumerate(batch_arr):
+                        if (j < len(batch_arr) - 1 and elem != batch_arr[j + 1]):
+                            temp.append(j + 1)
                     ref = torch.Tensor(temp).to(torch.int32).to('cuda')
                   
                     context_node_gnn_feats = torch.index_select(x, 0, ref)
