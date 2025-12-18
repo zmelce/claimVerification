@@ -874,8 +874,6 @@ class TextKGMessagePassing(RobertaModel):
                 if child is not None:
                     load(child, prefix + name + ".")
 
-            # Make sure we are able to load base models as well as derived models (with heads)
-
         start_prefix = ""
         model_to_load = model
         has_prefix_module = any(s.startswith(cls.base_model_prefix) for s in state_dict.keys())
