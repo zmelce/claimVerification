@@ -685,7 +685,7 @@ class RobertaPooler2(nn.Module):
 
 class LMGNN(nn.Module):
 
-    def __init__(self, args={},model_name='roberta-large', k=5, n_ntype=4, n_etype=38,
+    def __init__(self, args={},model_name='roberta-large', k=5,
                  concept_dim=384, n_attention_head=2,
                  fc_dim=200, n_fc_layer=0, p_emb=0.2, p_gnn=0.2, p_fc=0.2,
                  init_range=0.02, ie_dim=200, info_exchange=True, ie_layer_num=1, sep_ie_layers=True, layer_id=-1):
@@ -715,7 +715,6 @@ class LMGNN(nn.Module):
 
         self.mp = TextKGMessagePassing.from_pretrained("roberta-large", output_hidden_states=True,
                                                                           args=args, k=k,
-                                                                          n_ntype=n_ntype, n_etype=n_etype,
                                                                           dropout=p_gnn, concept_dim=concept_dim,
                                                                           ie_dim=ie_dim, p_fc=p_fc,
                                                                           info_exchange=info_exchange,
@@ -757,15 +756,11 @@ class LMGNN(nn.Module):
 
 class TextKGMessagePassing(RobertaModel):
 
-    def __init__(self, config, k=5, n_ntype=4, n_etype=38, dropout=0.2, n_attention_head=2,concept_dim=384, ie_dim=200, p_fc=0.2, info_exchange=True, ie_layer_num=1, sep_ie_layers=False):
+    def __init__(self, config, k=5, dropout=0.2, n_attention_head=2,concept_dim=384, ie_dim=200, p_fc=0.2, info_exchange=True, ie_layer_num=1, sep_ie_layers=False):
         super().__init__(config=config)
 
-        self.n_ntype = n_ntype
-        self.n_etype = n_etype
-
         self.hidden_size = concept_dim
-        self.emb_node_type = nn.Linear(self.n_ntype, concept_dim // 2)
-
+        
         self.basis_f = 'sin' #['id', 'linact', 'sin', 'none']
         if self.basis_f in ['id']:
             self.emb_score = nn.Linear(1, concept_dim // 2)
@@ -784,7 +779,7 @@ class TextKGMessagePassing(RobertaModel):
         self.dropout = nn.Dropout(dropout)
         self.dropout_rate = dropout
 
-        self.encoder = RoBERTaGAT(config, k=k, n_ntype=n_ntype, n_etype=n_etype, hidden_size=384, dropout=dropout, concept_dim=concept_dim, ie_dim=ie_dim, p_fc=p_fc, info_exchange=info_exchange, ie_layer_num=ie_layer_num, sep_ie_layers=sep_ie_layers)
+        self.encoder = RoBERTaGAT(config, k=k, hidden_size=384, dropout=dropout, concept_dim=concept_dim, ie_dim=ie_dim, p_fc=p_fc, info_exchange=info_exchange, ie_layer_num=ie_layer_num, sep_ie_layers=sep_ie_layers)
 
         self.sent_dim = config.hidden_size
 
@@ -906,7 +901,7 @@ class TextKGMessagePassing(RobertaModel):
 
 class RoBERTaGAT(BertEncoder):
 
-    def __init__(self, config, k=5, fc_dim=200, n_fc_layer=0,n_ntype=1, n_etype=38, hidden_size=384, dropout=0.2, concept_dim=384, ie_dim=200, p_fc=0.2, info_exchange=True, ie_layer_num=1, sep_ie_layers=False):
+    def __init__(self, config, k=5, fc_dim=200, n_fc_layer=0, hidden_size=384, dropout=0.2, concept_dim=384, ie_dim=200, p_fc=0.2, info_exchange=True, ie_layer_num=1, sep_ie_layers=False):
         super().__init__(config)
 
         self.k = k
